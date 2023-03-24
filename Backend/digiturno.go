@@ -24,7 +24,17 @@ func main() {
 
 	router := mux.NewRouter()
 	// Define your routes here using router.HandleFunc()
-	http.ListenAndServe(":8080", router)
+	http.ListenAndServe(":8081", router)
+
+	// Agregar una ruta para recibir los datos del usuario desde Vue
+	router.HandleFunc("http://localhost:8081/enviar-turno", RecibirTurno)
+}
+
+func RecibirTurno(w http.ResponseWriter, r *http.Request) {
+	// Leer los datos enviados desde Vue
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 
 	// Configuración del cliente de Kafka
 	config := sarama.NewConfig()
@@ -33,12 +43,12 @@ func main() {
 	config.Producer.Return.Successes = true
 	config.Consumer.Return.Errors = true
 
-	// Agregar una ruta para recibir los datos del usuario desde Vue
-	router.HandleFunc("/datos-turno", func(w http.ResponseWriter, r *http.Request) {
-		// Leer los datos enviados desde Vue
+	if r.Method == "POST" {
+
 		id, _ := strconv.ParseInt(r.FormValue("id"), 10, 64)
 		name := r.FormValue("name")
 		cellphone, _ := strconv.ParseInt(r.FormValue("cellphone"), 10, 64)
+
 		// Creación del cliente de Kafka
 		producer, err := sarama.NewSyncProducer([]string{broker}, config)
 		if err != nil {
@@ -145,5 +155,12 @@ func main() {
 
 			}
 		}
-	}).Methods("POST")
+		// ...
+	} else if r.Method == "OPTIONS" {
+		// Handle OPTIONS request (preflight)
+		w.WriteHeader(http.StatusOK)
+	} else {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+
 }

@@ -1,6 +1,6 @@
 <template>
     <div class="User">
-      <img alt="Medi plus" src="../assets/logoEps.png">
+      <img alt="Medi plus" src="../assets/Logo.png">
       <h1>BuroMedi</h1>
       <label for="id">Ingrese su cédula:</label>
       <input type="number" v-model="id">
@@ -38,20 +38,18 @@ export default {
     methods: {
       turno(){
         this.$router.push('/turn')
+        axios.post('http://localhost:8081/enviar-turno', {
+          id: this.id,
+          name: this.name,
+          cellphone: this.cellphone
+        })
+        .then(response => {
+          console.log(response.data);
+        })
+        .catch(error => {
+          console.log(error);
+        });
       }
-    },
-    enviarDatos() {
-      axios.post('/enviar-turno', {
-        id: this.id,
-        name: this.name,
-        cellphone: this.cellphone
-      })
-      .then(response => {
-        console.log(response.data);
-      })
-      .catch(error => {
-        console.log(error);
-      });
     }
   }
 

@@ -2,7 +2,7 @@
     <div class="User">
       <img alt="Medi plus" src="../assets/logoEps.png">
       <h1>BuroMedi</h1>
-      <p>Bienvenido usuario {{msg}} su turno es el</p>
+      <p>Bienvenido usuario {{msg}} es su turno</p>
       <br>
       <br>
       <br>
