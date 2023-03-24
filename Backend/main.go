@@ -65,16 +65,19 @@ func main() {
 	for {
 		// Lectura del ID y nombre desde la entrada estándar
 		var id int64
+		var celular int64
 		var nombre string
-		fmt.Print("Ingrese el ID: ")
+		fmt.Print("Ingrese su cédula: ")
 		fmt.Scan(&id)
-		fmt.Print("Ingrese el nombre: ")
+		fmt.Print("Ingrese su nombre: ")
 		fmt.Scan(&nombre)
+		fmt.Print("Ingrese su celular: ")
+		fmt.Scan(&celular)
 
 		// Creación del mensaje de Kafka
 		message := &sarama.ProducerMessage{
 			Topic: topic,
-			Value: sarama.StringEncoder(fmt.Sprintf("%d;%s", id, nombre)),
+			Value: sarama.StringEncoder(fmt.Sprintf("%d;%s;%d", id, nombre, celular)),
 		}
 
 		// Envío del mensaje a Kafka
@@ -90,7 +93,7 @@ func main() {
 				log.Printf("Error al abrir el archivo de offsets: %v", err)
 			} else {
 				defer f.Close()
-				if _, err := f.WriteString(fmt.Sprintf("%d;%d;%d;%s\n", partition, offset, id, nombre)); err != nil {
+				if _, err := f.WriteString(fmt.Sprintf("%d;%d;%d;%s;%d\n", partition, offset, id, nombre, celular)); err != nil {
 					log.Printf("Error al escribir el offset en el archivo: %v", err)
 				}
 			}
@@ -99,41 +102,25 @@ func main() {
 		// Espera de 1 segundo antes de continuar
 		time.Sleep(1 * time.Second)
 
-		// Comprobación de señales para el cierre del programa
+		// Comprobación de señales
 		select {
 		case msg := <-partitionConsumer.Messages():
 			// Procesar el mensaje recibido
 			log.Printf("Mensaje recibido: %s", string(msg.Value))
-			// // Actualizar el archivo de offsets
-			// f, err := os.OpenFile("offsets.txt", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
-			// if err != nil {
-			// 	log.Printf("Error al abrir el archivo de offsets: %v", err)
-			// } else {
-			// 	defer f.Close()
-			// 	partitions, err := consumer.Partitions(topic)
-			// 	if err != nil {
-			// 		log.Fatalf("Error al obtener las particiones del tópico %s: %v", topic, err)
-			// 	}
-
-			// 	// Obtener los offsets más recientes de cada partición
-			// 	for _, p := range partitions {
-
-			// 		if err != nil {
-			// 			log.Fatalf("Error al obtener el offset más reciente de la partición %d: %v", p, err)
-			// 		}
-			// 		if _, err := f.WriteString(fmt.Sprintf("%d;%d;%s\n", p, offset, time.Now().Format(time.RFC3339))); err != nil {
-			// 			log.Printf("Error al escribir el offset en el archivo: %v", err)
-			// 		}
-			// 	}
-			// 	if err := f.Sync(); err != nil {
-			// 		log.Printf("Error al sincronizar el archivo de offsets: %v", err)
-			// 	}
-			// }
-
+			f, err := os.OpenFile("recived.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+			if err != nil {
+				log.Printf("Error al abrir el archivo de offsets: %v", err)
+			} else {
+				defer f.Close()
+				if _, err := f.WriteString(fmt.Sprintf("Mensaje recibido: %s\n", string(msg.Value))); err != nil {
+					log.Printf("Error al escribir el offset en el archivo: %v", err)
+				}
+			}
 		case err := <-partitionConsumer.Errors():
 			log.Printf("Error al recibir el mensaje: %v", err)
 		case <-signals:
 			log.Println("Cerrando el programa...")
+			partitionConsumer.AsyncClose()
 			return
 		default:
 		}
