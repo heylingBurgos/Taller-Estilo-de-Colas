@@ -3,30 +3,49 @@
       <img alt="Medi plus" src="../assets/logoEps.png">
       <h1>BuroMedi</h1>
       <label for="id">Ingrese su cédula:</label>
-      <input type="text" id="id" v-model="id">
+      <input type="number" v-model="id">
       <br>
       <br>
-      <label for="id">Ingrese su nombre:</label>
-      <input type="text" id="name" v-model="name">
+      <label for="name">Ingrese su nombre:</label>
+      <input type="text" v-model="name">
       <br>
       <br>
-      <label for="id">Ingrese su ceular:</label>
-      <input type="text" id="cellphone" v-model="cellphone">
+      <label for="cellphone">Ingrese su celular:</label>
+      <input type="number" v-model="cellphone">
       <br>
       <br>
       <br>
       <button id="button">Registrar</button>
     </div>
 </template>
-
+<!-- Digiturno-->
 <script>
-export default {
-  name: 'DigiturnoUser',
-  props: {
-    msg: String
+  import axios from './axios';
+  export default {
+    data() {
+      return {
+        id: "",
+        name: "",
+        cellphone:""
+      };
+    },
+    enviarDatos() {
+      axios.post('/enviar-turno', {
+        id: this.id,
+        name: this.name,
+        cellphone: this.cellphone
+      })
+      .then(response => {
+        console.log(response.data);
+      })
+      .catch(error => {
+        console.log(error);
+      });
+    }
   }
-}
+
 </script>
+
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
