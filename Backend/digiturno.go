@@ -29,7 +29,7 @@ func main() {
 	handler := cors.Default().Handler(router)
 
 	// Agregar una ruta para recibir los datos del usuario desde Vue
-	router.HandleFunc("http://localhost:8081/enviar-turno", RecibirTurno)
+	router.HandleFunc("http://localhost:3000/", RecibirTurno)
 
 	// Define your routes here using router.HandleFunc()
 	http.ListenAndServe(":8080", handler)

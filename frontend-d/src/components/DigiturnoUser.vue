@@ -16,7 +16,7 @@
       <br>
       <br>
       
-      <button id="button" @click="turno" :msg="name">registrar</button>
+      <button id="button" @click="turno">registrar</button>
     </div>
 </template>
 <!-- Digiturno-->
@@ -25,9 +25,6 @@ import axios from 'axios';
 
 export default {
     name: "DigiturnoUser",
-    props: {
-        msg: String
-    },
     data() {
       return {
         id: "",
@@ -37,8 +34,8 @@ export default {
     },
     methods: {
       turno(){
-        this.$router.push('/turn')
-        axios.post('http://localhost:8081/enviar-turno', {
+        this.$router.push('/turn/' + this.name)
+        axios.post('http://localhost:3000/', {
           id: this.id,
           name: this.name,
           cellphone: this.cellphone

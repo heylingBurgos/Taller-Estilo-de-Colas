@@ -1,8 +1,8 @@
 <template>
     <div class="User">
-      <img alt="Medi plus" src="../assets/logoEps.png">
+      <img alt="Medi plus" src="../assets/Logo.png">
       <h1>BuroMedi</h1>
-      <p>Bienvenido usuario {{msg}} es su turno</p>
+      <p>Bienvenido {{$route.params.id}} su turno es</p>
       <br>
       <br>
       <br>
@@ -17,9 +17,6 @@ export default {
     return {
       turnos: []
     }
-  },
-  props: {
-    msg: String
   },
   methods: {
     home(){
