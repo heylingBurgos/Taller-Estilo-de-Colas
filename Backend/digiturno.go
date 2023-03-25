@@ -13,6 +13,7 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 )
 
 const (
@@ -23,11 +24,15 @@ const (
 func main() {
 
 	router := mux.NewRouter()
-	// Define your routes here using router.HandleFunc()
-	http.ListenAndServe(":8081", router)
+
+	// Configurar el middleware CORS
+	handler := cors.Default().Handler(router)
 
 	// Agregar una ruta para recibir los datos del usuario desde Vue
 	router.HandleFunc("http://localhost:8081/enviar-turno", RecibirTurno)
+
+	// Define your routes here using router.HandleFunc()
+	http.ListenAndServe(":8080", handler)
 }
 
 func RecibirTurno(w http.ResponseWriter, r *http.Request) {
@@ -35,6 +40,11 @@ func RecibirTurno(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
+
+	// Responder al cliente de Vue
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status": "ok"}`))
 
 	// Configuración del cliente de Kafka
 	config := sarama.NewConfig()
