@@ -13,7 +13,7 @@ var corsOptions2 = {
     origin: "http://localhost:9092"
 };*/
 
-app.use(cors({ origin: 'http://localhost:8080' }));
+app.use(cors({ origin: 'http://localhost:9092' }));
 
 // parse requests of content-type - application/json
 app.use(express.json());
@@ -28,7 +28,7 @@ app.get("/", (req, res) => {
 
 
 // recibir datos desde cliente componente DigiturnoUser
-app.post("http://localhost:8080/",(req, res) => {
+app.post("http://localhost:9092/",(req, res) => {
     const datos = {
         id: req.body.id,
         name: req.body.name,
