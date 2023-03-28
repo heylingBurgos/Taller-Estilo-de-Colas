@@ -1,6 +1,6 @@
 <template>
     <div class="User">
-      <img alt="Medi plus" src="../assets/logoEps.png">
+      <img alt="Medi plus" src="../assets/Logo.png">
       <h1>BuroMedi</h1>
       <p>Bienvenido usuario {{name1}} es su turno</p>
       <br>
