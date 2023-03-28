@@ -2,29 +2,21 @@
     <div class="User">
       <img alt="Medi plus" src="../assets/logoEps.png">
       <h1>BuroMedi</h1>
-      <p>Bienvenido usuario {{msg}} es su turno</p>
+      <p>Bienvenido usuario {{name1}} es su turno</p>
       <br>
       <br>
       <br>
       <h1>1</h1>
-      <button id="button" @click="home">Regresar</button>
+      <button id="button">Regresar</button>
     </div>
 </template>
 
 <script>
 export default {
-  data: function () {
-    return {
-      turnos: []
-    }
-  },
   props: {
-    msg: String
-  },
-  methods: {
-    home(){
-      this.$router.push('/')
-    }
+    id1: Number,
+    name1: String,
+    cellphone1: Number
   }
 }
 </script>

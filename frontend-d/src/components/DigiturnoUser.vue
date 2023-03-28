@@ -15,36 +15,47 @@
       <br>
       <br>
       <br>
-      
       <button id="button" @click="turno" :msg="name">registrar</button>
     </div>
 </template>
 <!-- Digiturno-->
 <script>
 import axios from 'axios';
-
 export default {
-    name: "DigiturnoUser",
-    props: {
-        msg: String
-    },
-    data() {
-      return {
-        id: "",
-        name: "",
-        cellphone:""
-      };
-    },
-    methods: {
+  name: "DigiturnoUser",
+  props: {
+    id1: Number,
+    name1: String,
+    cellphone1: Number
+  },
+  data() {
+    return {
+      id: "", // Define la propiedad "id"
+      name: "",
+      cellphone:""
+    };
+  },
+  methods: {
       turno(){
-        this.$router.push('/turn')
-        axios.post('http://localhost:8081/enviar-turno', {
+        
+        axios.post('http://localhost:4000/', {
           id: this.id,
           name: this.name,
-          cellphone: this.cellphone
+          cellphone: this.cellphone,
+          
         })
         .then(response => {
-          console.log(response.data);
+          // Acceder a los datos de respuesta
+          
+          this.$router.push({
+            path: '/turn',
+            query: {
+              id: response.data.ID,
+              name: response.data.Name,
+              cellphone: response.data.Cellphone
+            }
+          });
+
         })
         .catch(error => {
           console.log(error);

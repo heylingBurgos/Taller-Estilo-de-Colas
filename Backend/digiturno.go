@@ -21,6 +21,12 @@ const (
 	topic  = "DigiturnoE"
 )
 
+type Datos struct {
+	Id        int64  `json:"id"`
+	Name      string `json:"name"`
+	Cellphone int64  `json:"cellphone"`
+}
+
 func main() {
 
 	router := mux.NewRouter()
@@ -29,10 +35,14 @@ func main() {
 	handler := cors.Default().Handler(router)
 
 	// Agregar una ruta para recibir los datos del usuario desde Vue
-	router.HandleFunc("http://localhost:8081/enviar-turno", RecibirTurno)
+	router.HandleFunc("/", RecibirTurno)
 
 	// Define your routes here using router.HandleFunc()
-	http.ListenAndServe(":8080", handler)
+	err := http.ListenAndServe(":5000", handler)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 }
 
 func RecibirTurno(w http.ResponseWriter, r *http.Request) {
@@ -41,6 +51,7 @@ func RecibirTurno(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 
+	fmt.Printf("Entra")
 	// Responder al cliente de Vue
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -55,9 +66,15 @@ func RecibirTurno(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == "POST" {
 
-		id, _ := strconv.ParseInt(r.FormValue("id"), 10, 64)
-		name := r.FormValue("name")
-		cellphone, _ := strconv.ParseInt(r.FormValue("cellphone"), 10, 64)
+		decoder := json.NewDecoder(r.Body)
+		var datos Datos
+		err := decoder.Decode(&datos)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Utilizar los datos recibidos
+		log.Print("Datos  ", datos.Id, datos.Name, datos.Cellphone)
 
 		// Creación del cliente de Kafka
 		producer, err := sarama.NewSyncProducer([]string{broker}, config)
@@ -73,7 +90,7 @@ func RecibirTurno(w http.ResponseWriter, r *http.Request) {
 		// Creación del mensaje de Kafka
 		message := &sarama.ProducerMessage{
 			Topic: topic,
-			Value: sarama.StringEncoder(fmt.Sprintf("%d;%s;%d", id, name, cellphone)),
+			Value: sarama.StringEncoder(fmt.Sprintf("%d;%s;%d", datos.Id, datos.Name, datos.Cellphone)),
 		}
 
 		// Envío del mensaje a Kafka
@@ -89,7 +106,7 @@ func RecibirTurno(w http.ResponseWriter, r *http.Request) {
 				log.Printf("Error al abrir el archivo de offsets: %v", err)
 			} else {
 				defer f.Close()
-				if _, err := f.WriteString(fmt.Sprintf("%d;%d;%d;%s;%d\n", partition, offset, id, name, cellphone)); err != nil {
+				if _, err := f.WriteString(fmt.Sprintf("%d;%d;%d;%s;%d\n", partition, offset, datos.Id, datos.Name, datos.Cellphone)); err != nil {
 					log.Printf("Error al escribir el offset en el archivo: %v", err)
 				}
 			}
@@ -145,6 +162,7 @@ func RecibirTurno(w http.ResponseWriter, r *http.Request) {
 					Name:      name,
 					Cellphone: cellphone,
 				}
+				log.Printf("Mensaje recibido: %s", resp.Name)
 				json.NewEncoder(w).Encode(resp)
 
 				f, err := os.OpenFile("recived.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
