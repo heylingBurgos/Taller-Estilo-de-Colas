@@ -13,7 +13,7 @@ var corsOptions2 = {
     origin: "http://localhost:9092"
 };*/
 
-app.use(cors({ origin: 'http://localhost:8080' }));
+app.use(cors({ origin: 'http://localhost:8080'}));
 
 // parse requests of content-type - application/json
 app.use(express.json());
@@ -26,29 +26,34 @@ app.get("/", (req, res) => {
     res.json({ message: "Servidor ejecutandose correctamente" });
 });
 
+app.get("/turn", (req, res) => {
+  axios.get()
+  return res.json
+});
 
-// recibir datos desde cliente componente DigiturnoUser
-app.post("/",(req, res) => {
-    
+
+
+app.post("/", (req, res) => {
     const datos = {
-        id: req.body.id,
-        name: req.body.name,
-        cellphone: req.body.cellphone
+      id: req.body.id,
+      name: req.body.name,
+      cellphone: req.body.cellphone
     };
     console.log(datos);
-    //Enviar datos a backend
-    axios.post("http://localhost:5000", datos)
-    .then(response => {
-        console.log(response.data);
-        res.json({mensaje: "Datos recibidos del backend correctamente"})
-    })
-    .catch(error => {
-        console.log(error);
-        res.json({mensaje: "Error al enviar datos"})
-    })
+    // Enviar datos a backend
 
-    res.json({mensaje: "Datos recibidos correctamente"})
-})
+    axios
+      .post("http://localhost:5000", datos)
+      .then(response => {
+        console.log(response.data);
+        res.redirect("http://localhost:8080/turn")
+      })
+      .catch(error => {
+        console.log(error);
+        res.json({ mensaje: "Error al enviar datos" });
+      });
+});
+
 
 const history = require('connect-history-api-fallback');
 app.use(history());

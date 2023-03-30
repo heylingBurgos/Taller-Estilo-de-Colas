@@ -3,7 +3,7 @@ module digiturno
 go 1.20
 
 require (
-	github.com/Shopify/sarama v1.38.1 // indirect
+	github.com/Shopify/sarama v1.36.0 // indirect
 	github.com/confluentinc/confluent-kafka-go v1.9.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/eapache/go-resiliency v1.3.0 // indirect

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -9,16 +10,19 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
+	"time"
 
 	"github.com/Shopify/sarama"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 )
 
-const (
-	broker = "localhost:9092"
-	topic  = "DigiturnoE"
+var (
+	broker  = "localhost:9092"
+	GroupID = "GrupoEjemplo"
+	topics  = []string{"eltopic"}
 )
 
 type Datos struct {
@@ -27,8 +31,9 @@ type Datos struct {
 	Cellphone int64  `json:"cellphone"`
 }
 
-func main() {
+var m = 0
 
+func main() {
 	router := mux.NewRouter()
 
 	// Configurar el middleware CORS
@@ -48,23 +53,18 @@ func main() {
 func RecibirTurno(w http.ResponseWriter, r *http.Request) {
 	// Leer los datos enviados desde Vue
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET")
 	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 
-	fmt.Printf("Entra")
-	// Responder al cliente de Vue
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status": "ok"}`))
-
-	// Configuración del cliente de Kafka
-	config := sarama.NewConfig()
-	config.Producer.RequiredAcks = sarama.WaitForAll
-	config.Producer.Retry.Max = 5
-	config.Producer.Return.Successes = true
-	config.Consumer.Return.Errors = true
-
 	if r.Method == "POST" {
+
+		// Configuración del cliente de Kafka
+		config := sarama.NewConfig()
+		config.Producer.RequiredAcks = sarama.WaitForAll
+		config.Producer.Retry.Max = 5
+		config.Producer.Return.Successes = true
+		config.Consumer.Group.Session.Timeout = 10 * time.Second
+		config.Consumer.Group.Heartbeat.Interval = 3 * time.Second
 
 		decoder := json.NewDecoder(r.Body)
 		var datos Datos
@@ -72,24 +72,24 @@ func RecibirTurno(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
-
+		defer r.Body.Close()
 		// Utilizar los datos recibidos
 		log.Print("Datos  ", datos.Id, datos.Name, datos.Cellphone)
 
 		// Creación del cliente de Kafka
 		producer, err := sarama.NewSyncProducer([]string{broker}, config)
 		if err != nil {
-			log.Fatalf("Error al crear el cliente de Kafka: %v", err)
+			log.Fatalf("Error al crear el productor de Kafka: %v", err)
 		}
 		defer func() {
 			if err := producer.Close(); err != nil {
-				log.Fatalf("Error al cerrar el cliente de Kafka: %v", err)
+				log.Fatalf("Error al cerrar el productor de Kafka: %v", err)
 			}
 		}()
 
 		// Creación del mensaje de Kafka
 		message := &sarama.ProducerMessage{
-			Topic: topic,
+			Topic: topics[0],
 			Value: sarama.StringEncoder(fmt.Sprintf("%d;%s;%d", datos.Id, datos.Name, datos.Cellphone)),
 		}
 
@@ -112,8 +112,8 @@ func RecibirTurno(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		// Creación del cliente de Kafka
-		consumer, err := sarama.NewConsumer([]string{broker}, config)
+		// Creación del cliente de Kafka ---------------------------------------------------------
+		consumer, err := sarama.NewConsumerGroup([]string{broker}, "digiturno", config)
 		if err != nil {
 			log.Fatalf("Error al crear el consumidor de Kafka: %v", err)
 		}
@@ -123,47 +123,67 @@ func RecibirTurno(w http.ResponseWriter, r *http.Request) {
 			}
 		}()
 
-		// Asignación de la partición al consumidor
-		partitionConsumer, err := consumer.ConsumePartition(topic, 0, sarama.OffsetNewest)
-		if err != nil {
-			log.Fatalf("Error al asignar la partición al consumidor de Kafka: %v", err)
-		}
-		defer func() {
-			if err := partitionConsumer.Close(); err != nil {
-				log.Fatalf("Error al cerrar el consumidor de la partición: %v", err)
-			}
-		}()
-
 		// Configuración de señales para el cierre del programa
 		signals := make(chan os.Signal, 1)
 		signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
-		// Ciclo principal del programa
-		for {
+		//Canal para recibir los mensajes consumidos
+		messages := make(chan *sarama.ConsumerMessage, 256)
 
-			// Comprobación de señales
+		// Manejador del grupo de consumidores
+		handler := &consumerHandler{
+			messages: messages,
+		}
+
+		// Inicio del grupo de consumidores
+		go func() {
+			for {
+				if err := consumer.Consume(context.Background(), topics, handler); err != nil {
+					log.Fatalf("Error al consumir mensajes: %v", err)
+				}
+				if handler.ctx.Err() != nil {
+					// Si el contexto está cancelado, salir del bucle
+					return
+				}
+
+			}
+		}()
+
+		// Consumo de los mensajes
+	consumingLoop:
+		for {
 			select {
-			case msg := <-partitionConsumer.Messages():
+			case msg := <-messages:
 				// Procesar el mensaje recibido
 				log.Printf("Mensaje recibido: %s", string(msg.Value))
 				parts := strings.Split(string(msg.Value), ";")
 				id, _ := strconv.ParseInt(parts[0], 10, 64)
 				name := parts[1]
 				cellphone, _ := strconv.ParseInt(parts[2], 10, 64)
-
-				// Enviar los datos de vuelta a Vue en un mensaje
-				w.Header().Set("Content-Type", "application/json")
+				m = m + 1
 				resp := struct {
 					ID        int64  `json:"id"`
 					Name      string `json:"name"`
 					Cellphone int64  `json:"cellphone"`
+					Turn      int    `json:"turn"`
 				}{
 					ID:        id,
 					Name:      name,
 					Cellphone: cellphone,
+					Turn:      m,
 				}
-				log.Printf("Mensaje recibido: %s", resp.Name)
-				json.NewEncoder(w).Encode(resp)
+
+				respJSON, err := json.Marshal(resp)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				// Enviar los datos de vuelta a Vue en un mensaje
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				w.Write(respJSON)
+				handler.session.MarkMessage(msg, "")
+				log.Printf("Mensaje recibido: %s", string(respJSON))
 
 				f, err := os.OpenFile("recived.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 				if err != nil {
@@ -174,21 +194,51 @@ func RecibirTurno(w http.ResponseWriter, r *http.Request) {
 						log.Printf("Error al escribir el offset en el archivo: %v", err)
 					}
 				}
-			case err := <-partitionConsumer.Errors():
-				log.Printf("Error al recibir el mensaje: %v", err)
-			case <-signals:
-				log.Println("Cerrando el programa...")
-				partitionConsumer.AsyncClose()
 				return
 
+			case <-signals:
+				log.Print("Señal recibida, deteniendo la aplicación...")
+				handler.cancel()
+				break consumingLoop
 			}
 		}
-		// ...
+
 	} else if r.Method == "OPTIONS" {
 		// Handle OPTIONS request (preflight)
 		w.WriteHeader(http.StatusOK)
+		return
 	} else {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 
+}
+
+// Manejador del grupo de consumidores
+type consumerHandler struct {
+	messages chan *sarama.ConsumerMessage
+	session  sarama.ConsumerGroupSession
+	ctx      context.Context
+	cancel   context.CancelFunc
+	wg       sync.WaitGroup
+}
+
+func (h *consumerHandler) Setup(session sarama.ConsumerGroupSession) error {
+	h.ctx, h.cancel = context.WithCancel(context.Background())
+	h.session = session
+	return nil
+}
+
+func (h *consumerHandler) Cleanup(session sarama.ConsumerGroupSession) error {
+	h.cancel()
+	h.wg.Wait()
+	return nil
+}
+
+func (h *consumerHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+	h.wg.Add(1)
+	defer h.wg.Done()
+	for msg := range claim.Messages() {
+		h.messages <- msg
+	}
+	return nil
 }

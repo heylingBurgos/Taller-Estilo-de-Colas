@@ -2,21 +2,21 @@
     <div class="User">
       <img alt="Medi plus" src="../assets/Logo.png">
       <h1>BuroMedi</h1>
-      <p>Bienvenido usuario {{name1}} es su turno</p>
+      <p>Bienvenido usuario {{name}} es su turno</p>
       <br>
       <br>
       <br>
-      <h1>1</h1>
-      <button id="button">Regresar</button>
+      <h1>{{turn}}</h1>
     </div>
 </template>
 
 <script>
 export default {
   props: {
-    id1: Number,
-    name1: String,
-    cellphone1: Number
+    id: Number,
+    name: String,
+    cellphone: Number,
+    turn: Number
   }
 }
 </script>

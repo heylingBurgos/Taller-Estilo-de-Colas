@@ -37,25 +37,13 @@ export default {
   },
   methods: {
       turno(){
-        
         axios.post('http://localhost:4000/', {
           id: this.id,
           name: this.name,
           cellphone: this.cellphone,
-          
         })
         .then(response => {
-          // Acceder a los datos de respuesta
-          
-          this.$router.push({
-            path: '/turn',
-            query: {
-              id: response.data.ID,
-              name: response.data.Name,
-              cellphone: response.data.Cellphone
-            }
-          });
-
+          console.log(response.data)
         })
         .catch(error => {
           console.log(error);
