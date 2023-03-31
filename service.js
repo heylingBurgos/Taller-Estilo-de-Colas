@@ -46,7 +46,7 @@ app.post("/", (req, res) => {
       .post("http://localhost:5000", datos)
       .then(response => {
         console.log(response.data);
-        res.redirect("http://localhost:8080/turn")
+        res.redirect("http://localhost:8081")
       })
       .catch(error => {
         console.log(error);

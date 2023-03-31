@@ -7,7 +7,7 @@
       <br>
       <br>
       <label for="name">Ingrese su nombre:</label>
-      <input type="text" v-model="name">
+      <input type="text" v-model="nombre">
       <br>
       <br>
       <label for="cellphone">Ingrese su celular:</label>
@@ -15,42 +15,39 @@
       <br>
       <br>
       <br>
-      <button id="button" @click="turno" :msg="name">registrar</button>
+      <button id="button" @click="turno()" >registrar</button>
     </div>
 </template>
+
 <!-- Digiturno-->
 <script>
 import axios from 'axios';
+
 export default {
   name: "DigiturnoUser",
-  props: {
-    id1: Number,
-    name1: String,
-    cellphone1: Number
-  },
   data() {
     return {
       id: "", // Define la propiedad "id"
-      name: "",
+      nombre: "",
       cellphone:""
     };
   },
   methods: {
-      turno(){
-        axios.post('http://localhost:4000/', {
-          id: this.id,
-          name: this.name,
-          cellphone: this.cellphone,
-        })
-        .then(response => {
-          console.log(response.data)
-        })
-        .catch(error => {
-          console.log(error);
-        });
-      }
+    turno(){
+      axios.post('http://localhost:4000/', {
+        id: this.id,
+        nombre: this.nombre,
+        cellphone: this.cellphone,
+      })
+      .then(response => {
+        console.log(response.data)
+      })
+      .catch(error => {
+        console.log(error);
+      });
     }
   }
+}
 
 </script>
 
@@ -157,7 +154,6 @@ img {
 #routerlink {
   text-decoration: none;
   font-style: none;
-
 } 
 
 

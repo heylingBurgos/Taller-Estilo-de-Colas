@@ -2,7 +2,7 @@
     <div class="User">
       <img alt="Medi plus" src="../assets/Logo.png">
       <h1>BuroMedi</h1>
-      <p>Bienvenido usuario {{name}} es su turno</p>
+      <p>Bienvenido usuario es su turno</p>
       <br>
       <br>
       <br>
@@ -11,6 +11,8 @@
 </template>
 
 <script>
+
+
 export default {
   props: {
     id: Number,
