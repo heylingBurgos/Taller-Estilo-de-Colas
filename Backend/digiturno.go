@@ -33,11 +33,23 @@ type Datos struct {
 
 var m = 0
 
+type Usuario struct {
+	ID      int64  `json:"id"`
+	Nombre  string `json:"name"`
+	Celular int64  `json:"cellphone"`
+	Turno   int    `json:"turn"`
+}
+
+var usuarios []*Usuario
+
 func main() {
 	router := mux.NewRouter()
 
 	// Configurar el middleware CORS
 	handler := cors.Default().Handler(router)
+
+	//Recibir la lista de turnos
+	router.HandleFunc("/turnos", getTurnos)
 
 	// Agregar una ruta para recibir los datos del usuario desde Vue
 	router.HandleFunc("/", RecibirTurno)
@@ -48,6 +60,24 @@ func main() {
 		log.Fatal(err)
 	}
 
+}
+
+func getTurnos(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET")
+	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
+	fi, err := os.OpenFile("../logs.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		log.Printf("Error al abrir el archivo de offsets: %v", err)
+	} else {
+		defer fi.Close()
+		if _, err := fi.WriteString("Desde Golang recibiendo petición GET lista de usuarios. \n"); err != nil {
+			log.Printf("Error al escribir el offset en el archivo: %v", err)
+		}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(usuarios)
 }
 
 func RecibirTurno(w http.ResponseWriter, r *http.Request) {
@@ -161,16 +191,25 @@ func RecibirTurno(w http.ResponseWriter, r *http.Request) {
 				name := parts[1]
 				cellphone, _ := strconv.ParseInt(parts[2], 10, 64)
 				m = m + 1
+
+				usuario := &Usuario{
+					ID:      id,
+					Nombre:  name,
+					Celular: cellphone,
+					Turno:   len(usuarios) + 1, // Asignar el siguiente número de turno disponible
+				}
+				usuarios = append(usuarios, usuario)
+
 				resp := struct {
-					ID        int64  `json:"id"`
-					Name      string `json:"name"`
-					Cellphone int64  `json:"cellphone"`
-					Turn      int    `json:"turn"`
+					ID      int64  `json:"id"`
+					Nombre  string `json:"name"`
+					Celular int64  `json:"cellphone"`
+					Turno   int    `json:"turn"`
 				}{
-					ID:        id,
-					Name:      name,
-					Cellphone: cellphone,
-					Turn:      m,
+					ID:      usuario.ID,
+					Nombre:  usuario.Nombre,
+					Celular: usuario.Celular,
+					Turno:   usuario.Turno,
 				}
 
 				respJSON, err := json.Marshal(resp)

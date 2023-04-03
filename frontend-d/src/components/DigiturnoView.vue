@@ -1,24 +1,81 @@
 <template>
-    <div class="User">
-      <img alt="Medi plus" src="../assets/Logo.png">
-      <h1>BuroMedi</h1>
-      <p>Bienvenido usuario es su turno</p>
-      <br>
-      <br>
-      <br>
-      <h1>{{turn}}</h1>
+  <div class="divi">
+    <img alt="Medi plus" src="../assets/Logo.png">
+    <h1>BuroMedi</h1>
+    <div v-if="pacientesMostrados">
+      <p v-if="mayor">No hay más turnos</p>
+      <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Turno</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="paciente in pacientesMostrados" :key="paciente.id">
+          <td>{{ paciente.name }}</td>
+          <td>{{ paciente.turn }}</td>
+        </tr>
+      </tbody>
+    </table>
     </div>
+    <div v-else>
+      <p>No hay nada que mostrar</p>
+    </div>
+    
+    <br>
+    <br>
+    <button @click="mostrarSiguiente">Mostrar</button>
+  </div>
 </template>
 
 <script>
-
+import axios from 'axios';
 
 export default {
-  props: {
-    id: Number,
-    name: String,
-    cellphone: Number,
-    turn: Number
+  data() {
+    return {
+      pacientes: [],
+      indiceMostrado: 0,
+      pacientesPorPagina: 1,
+      mayor: false
+    };
+  },
+  computed: {
+    pacientesMostrados() {
+    if (this.pacientes) {
+      return this.pacientes.slice(
+        this.indiceMostrado,
+        this.indiceMostrado + this.pacientesPorPagina
+      );
+    } else {
+      return [];
+    }
+  }
+  },
+  methods: {
+    mostrarSiguiente() {
+      this.indiceMostrado += this.pacientesPorPagina;
+      if (this.indiceMostrado >= this.pacientes.length) {
+        this.mayor = true
+      }else{
+        this.mayor = false
+      }
+    },
+    obtenerPacientes() {
+      axios.get('http://localhost:4000/turn')
+        .then(response => {
+          console.log("Respuesta dada por el bakend y recibida por DigiturnoView: "+response.data);
+          this.pacientes = response.data;
+        })
+        .catch(error => {
+          console.error('Error al recibir los pacientes:', error);
+        });
+    }
+  },
+  mounted() {
+    this.obtenerPacientes();
+    setInterval(this.obtenerPacientes, 2000);
   }
 }
 </script>
@@ -109,7 +166,7 @@ button:active {
   padding-bottom: 10px;
 }
 
-div{
+.divi{
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   padding: 20px;
@@ -120,6 +177,22 @@ div{
 img {
   width: 35%; 
   height: auto;
+}
+
+table {
+  width: 50%;
+  margin: auto;
+  text-align: center;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 10px;
+  border: 1px solid #ddd;
+}
+
+th {
+  background-color: #f2f2f2;
 }
 
 </style>

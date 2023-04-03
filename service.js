@@ -27,8 +27,15 @@ app.get("/", (req, res) => {
 });
 
 app.get("/turn", (req, res) => {
-  axios.get()
-  return res.json
+  var fs = require('fs');
+  axios.get('http://localhost:5000/turnos')
+    .then(response => {
+      console.log("Desde el servidor se recibe la respuesta de la petición emitida por DigiturnoView")
+      res.json(response.data)
+    })
+    .catch(error => {
+      console.log(error);
+    });
 });
 
 
@@ -39,14 +46,12 @@ app.post("/", (req, res) => {
       name: req.body.name,
       cellphone: req.body.cellphone
     };
-    console.log(datos);
-    // Enviar datos a backend
-
+    console.log("Desde el servidor Express solicitando la petición POST emitida por DigiturnoUser: "+datos);
     axios
       .post("http://localhost:5000", datos)
       .then(response => {
-        console.log(response.data);
-        res.redirect("http://localhost:8081")
+        console.log("Recibiendo los datos del backend en el Servidor: "+ response.data);
+        res.send(response.data);
       })
       .catch(error => {
         console.log(error);
@@ -65,3 +70,6 @@ const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}.`);
 });
+
+
+  
