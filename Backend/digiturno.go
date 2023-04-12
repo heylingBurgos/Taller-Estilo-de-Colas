@@ -21,8 +21,8 @@ import (
 
 var (
 	broker  = "localhost:9092"
-	GroupID = "GrupoEjemplo"
-	topics  = []string{"eltopic"}
+	GroupID = "GrupoDigiturno"
+	topics  = []string{"eltopico"}
 )
 
 type Datos struct {
@@ -229,7 +229,7 @@ func RecibirTurno(w http.ResponseWriter, r *http.Request) {
 					log.Printf("Error al abrir el archivo de offsets: %v", err)
 				} else {
 					defer f.Close()
-					if _, err := f.WriteString(fmt.Sprintf("Mensaje recibido: %s\n", string(msg.Value))); err != nil {
+					if _, err := f.WriteString(fmt.Sprintf("Mensaje recibido: %s%s%d\n", string(msg.Value), ";", usuario.Turno)); err != nil {
 						log.Printf("Error al escribir el offset en el archivo: %v", err)
 					}
 				}

@@ -1,11 +1,4 @@
-Mensaje recibido: 7687678;heyling;30000000
-Mensaje recibido: 5765765;jose;87876
-Mensaje recibido: 565657657;Alejandro;87687
-Mensaje recibido: 867868;katherine;232243
-Mensaje recibido: 78987;Joseph;223422
-Mensaje recibido: 433443;Maria;3223333
-Mensaje recibido: 433343;Juan;233232
-Mensaje recibido: 433434;dfdf;23323232
-Mensaje recibido: 4343;ddsds;2432
-Mensaje recibido: 4545;dfdfdf;3443
-Mensaje recibido: 3443;dsds;44343
+Mensaje recibido: 4223232;juan;3224523;1
+Mensaje recibido: 553;jose mario;4433443;2
+Mensaje recibido: 232323;andres;1278322;1
+Mensaje recibido: 128372;Luis;12612722;2

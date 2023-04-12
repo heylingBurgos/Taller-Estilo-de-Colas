@@ -30,7 +30,6 @@ app.get("/turn", (req, res) => {
   var fs = require('fs');
   axios.get('http://localhost:5000/turnos')
     .then(response => {
-      console.log("Desde el servidor se recibe la respuesta de la petición emitida por DigiturnoView")
       res.json(response.data)
     })
     .catch(error => {
